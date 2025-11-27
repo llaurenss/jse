@@ -27,7 +27,7 @@
 #undef REQUIRE_PLUGIN
 #include <updater>
 #include <jse_core>
-#include <jse_showkeys>
+#include <skeys>
 #include <jse_autosave>
 #include <octree>
 
@@ -492,7 +492,7 @@ public void OnPluginEnd() {
 public void OnLibraryAdded(const char[] sName) {
 	if (StrEqual(sName, "jse_core")) {
 		g_bCoreAvailable = true;
-	} else if (StrEqual(sName, "jse_showkeys")) {
+	} else if (StrEqual(sName, "jse_showkeys") || StrEqual(sName, "skeys")) {
 		g_bShowKeysAvailable = true;
 	} else if (StrEqual(sName, "octree")) {
 		g_bOctreeAvailable = true;
@@ -507,8 +507,8 @@ public void OnLibraryAdded(const char[] sName) {
 public void OnLibraryRemoved(const char[] sName) {
 	if (StrEqual(sName, "jse_core")) {
 		g_bCoreAvailable = false;
-	} else if (StrEqual(sName, "jse_showkeys")) {
-		g_bShowKeysAvailable = false;
+	} else if (StrEqual(sName, "jse_showkeys") || StrEqual(sName, "skeys")) {
+		g_bShowKeysAvailable = LibraryExists("jse_showkeys") || LibraryExists("skeys");
 	} else if (StrEqual(sName, "octree")) {
 		g_bOctreeAvailable = false;
 		g_iSpatialIdx = NULL_OCTREE;
@@ -519,7 +519,7 @@ public void OnAllPluginsLoaded() {
 	g_bSocketExtension = GetExtensionFileStatus("socket.ext") == 1;
 
 	g_bCoreAvailable = LibraryExists("jse_core");
-	g_bShowKeysAvailable = LibraryExists("jse_showkeys");
+	g_bShowKeysAvailable = LibraryExists("jse_showkeys") || LibraryExists("skeys");
 	g_bOctreeAvailable = LibraryExists("octree");
 }
 

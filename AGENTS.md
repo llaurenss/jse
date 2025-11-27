@@ -11,13 +11,14 @@
 - VS Code `SourcePawnLanguageServer` uses the bundled `spcomp.exe` at `C:/Users/Laurens/Desktop/tf2-server/sdk/sourcemod/1.12-b7217/spcomp.exe`.
 - Include resolution is preconfigured to read from:
   - `C:/Users/Laurens/Desktop/tf2-server/plugins/jse/scripting/include`
+  - `C:/Users/Laurens/Desktop/tf2-server/plugins/sjnetwork-plugins-v2/include`
   - `C:/Users/Laurens/Desktop/tf2-server/plugins/sjnetwork-deps/scripting/include`
   - `C:/Users/Laurens/Desktop/tf2-server/sdk/sourcemod/1.12-b7217/include`
 - If running commands from WSL (agent/automation), mirror those include paths with `/mnt/c/...` entries so tools resolve the same headers.
 
 ## Build, Test, and Development Commands
 - Prereqs: SourceMod 1.12+ plus the dependencies listed in `README.md`; maintainer handles compilation/testing and keeps artifacts out of git.
-- Compile (maintainer): `spcomp -i scripting/include -o build/jse_core.smx scripting/jse_core.sp` (ensure `build/` exists); loop over `scripting/*.sp` to build all, then deploy to `tf/addons/sourcemod/plugins/` and `sm plugins reload <name>`.
+- Compiler uses the same include paths as `SourcePawnLanguageServer` above. Example manual build: `spcomp -i scripting/include -i ../sjnetwork-plugins-v2/include -i ../sjnetwork-deps/scripting/include -o build/jse_core.smx scripting/jse_core.sp` (ensure `build/` exists); loop over `scripting/*.sp` to build all, then deploy to `tf/addons/sourcemod/plugins/` and `sm plugins reload <name>`.
 
 ## Coding Style & Naming Conventions
 - SourcePawn with `#pragma semicolon 1` and `#pragma newdecls required`; prefer transitional syntax used in existing files.
