@@ -109,7 +109,7 @@ enum struct SpawnFreeze {
 #define WARMUP_FRAMES_DEFAULT	66
 #define RESPAWN_FREEZE_FRAMES	66 // 1 second
 
-#define HUD_INTERVAL_FIRST		99
+#define HUD_INTERVAL_FIRST		66
 
 #define JSE_FOLDER				"data/jse"
 #define RECORD_FOLDER			"data/jse/jumpbot"
