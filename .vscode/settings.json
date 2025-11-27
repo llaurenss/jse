@@ -1,0 +1,9 @@
+{
+  "SourcePawnLanguageServer.compiler.path": "C:/Users/Laurens/Desktop/tf2-server/sdk/sourcemod/1.12-b7217/spcomp.exe",
+  "SourcePawnLanguageServer.includeDirectories": [
+    "C:/Users/Laurens/Desktop/tf2-server/plugins/jse/scripting/include",
+    "C:/Users/Laurens/Desktop/tf2-server/plugins/sjnetwork-deps/scripting/include",
+    "C:/Users/Laurens/Desktop/tf2-server/sdk/sourcemod/1.12-b7217/include"
+  ],
+  "sourcepawn.outputDirectoryPath": "C:/Users/Laurens/Desktop/tf2-server/plugins/jse/build/"
+}
