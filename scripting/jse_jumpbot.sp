@@ -3687,6 +3687,8 @@ public Action OnAutosavePreLoad(int iClient) {
 void blockFlags() {
 	int iEntity = INVALID_ENT_REFERENCE;
 	while ((iEntity = FindEntityByClassname(iEntity, "item_teamflag")) != INVALID_ENT_REFERENCE) {
+		// Unhook before re-hooking to avoid duplicate callbacks across map/round init
+		SDKUnhook(iEntity, SDKHook_Touch, Hook_TouchFlag);
 		SDKHook(iEntity, SDKHook_Touch, Hook_TouchFlag);
 	}
 }
@@ -3694,6 +3696,8 @@ void blockFlags() {
 void blockRegen() {
 	int iEntity = -1;
 	while ((iEntity = FindEntityByClassname(iEntity, "func_regenerate")) != INVALID_ENT_REFERENCE) {
+		// Unhook before re-hooking to avoid duplicate callbacks across map/round init
+		SDKUnhook(iEntity, SDKHook_Touch, Hook_TouchFuncRegenerate);
 		SDKHook(iEntity, SDKHook_Touch, Hook_TouchFuncRegenerate);
 	}
 }
