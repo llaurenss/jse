@@ -109,6 +109,8 @@ enum struct SpawnFreeze {
 #define WARMUP_FRAMES_DEFAULT	66
 #define RESPAWN_FREEZE_FRAMES	66 // 1 second
 
+#define HUD_INTERVAL_FIRST		99
+
 #define JSE_FOLDER				"data/jse"
 #define RECORD_FOLDER			"data/jse/jumpbot"
 #define TRASH_FOLDER 			"data/jse/jumpbot/.trash"
@@ -218,6 +220,8 @@ int g_iInterFrameIdx;
 int g_iInterFrameLength;
 
 int g_iWarmupFrames;
+int g_iLastHudTick;
+int g_iHudStage;
 
 ArrayList g_hRecBufferFrames;
 int g_iRewindWaitFrames;
@@ -614,6 +618,8 @@ public void OnMapStart() {
 	g_iTargetFollow = -1;
 	g_iLastCaller = -1;
 	g_iLastCallTime = 0;
+	g_iLastHudTick = 0;
+	g_iHudStage = 0;
 
 	g_hRecBuffer.Clear();
 	g_iRecBufferIdx = 0;
@@ -836,6 +842,9 @@ public void OnGameFrame() {
 			g_iClientInstruction ^= INST_WARMUP;
 			g_iClientInstruction |= INST_PLAY;
 			g_iRecBufferIdx = 0;
+			g_iHudStage = 0;
+			g_iLastHudTick = 0;
+			g_iRecBufferFrame = 0;
 
 			for (int i=0; i<hClientInfo.Length; i++) {
 				int iClient = g_hRecordingBots.Get(i, RecBot::iEnt);
@@ -895,6 +904,9 @@ public void OnGameFrame() {
 				}
 				
 				g_iRecBufferIdx = 0;
+				g_iHudStage = 0;
+				g_iLastHudTick = 0;
+				g_iRecBufferFrame = 0;
 
 				for (int i=0; i<hClientInfo.Length; i++) {
 					int iRecBot = g_hRecordingBots.Get(i, RecBot::iEnt);
@@ -1338,7 +1350,23 @@ public Action OnPlayerRunCmd(int iClient, int &iButtons, int &iImpulse, float fV
 				}
 			}
 			
-			if ((g_iRecBufferFrame % 22) == 0 && !(g_iClientInstruction & INST_WARMUP) && g_hRecBufferFrames != null) {
+			bool bShowHud = !(g_iClientInstruction & INST_WARMUP) && g_hRecBufferFrames != null && (g_iRecBufferFrame % 22 == 0);
+			if (bShowHud) {
+				int iTick = GetGameTickCount();
+				
+				if (g_iHudStage == 0) {
+					g_iHudStage = 1;
+					g_iLastHudTick = iTick;
+				} else if (g_iHudStage == 1) {
+					if (iTick - g_iLastHudTick < HUD_INTERVAL_FIRST) {
+						bShowHud = false;
+					} else {
+						g_iHudStage = 2;
+					}
+				}
+			}
+
+			if (bShowHud) {
 				char sTimePlay[32];
 				char sTimeTotal[32];
 				
@@ -3889,6 +3917,8 @@ void doFullStop() {
 	g_fPlaybackSpeed = 1.0;
 	g_iInterFrameIdx = 0;
 	g_iInterFrameLength = 0;
+	g_iLastHudTick = 0;
+	g_iHudStage = 0;
 	
 	// Release all buttons
 	for (int i=1; i<=MaxClients; i++) {
