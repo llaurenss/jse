@@ -326,6 +326,17 @@ public void OnPluginStart() {
 	
 	AutoExecConfig_ExecuteFile();
 	
+	// Strip notify from cvars that the engine mutates when bots are added so chat is not spammed.
+	ConVar hBotCount = FindConVar("tf_bot_count");
+	if (hBotCount != null) {
+		SetConVarFlags(hBotCount, GetConVarFlags(hBotCount) & ~FCVAR_NOTIFY);
+	}
+	
+	ConVar hSVTags = FindConVar("sv_tags");
+	if (hSVTags != null) {
+		SetConVarFlags(hSVTags, GetConVarFlags(hSVTags) & ~FCVAR_NOTIFY);
+	}
+	
 	// Commands
 	RegConsoleCmd(	"jb_record", 		cmdRecord, 							"Start recording movement into the buffer"							);
 	RegConsoleCmd(	"jb_play", 			cmdPlay, 							"Start playback of movement from the buffer on the control client"	);
@@ -3226,10 +3237,12 @@ public Action Timer_BotJoinExecute(Handle hTimer, any aData) {
 			FakeClientCommand(iClient, sBuffers[i]);
 		}
 		
+		/*
 		ConVar hCVCheats = FindConVar("sv_cheats");
 		if (hCVCheats.BoolValue) {
 			hCVCheats.BoolValue = false;
 		}
+		*/
 	}
 	
 	return Plugin_Handled;
