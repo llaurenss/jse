@@ -1,6 +1,6 @@
 #pragma semicolon 1
 
-#define DEBUG
+//#define DEBUG
 
 #define PLUGIN_AUTHOR	"AI"
 #define PLUGIN_VERSION	"1.0.0-rc5"
@@ -321,7 +321,7 @@ public void OnPluginStart() {
 	g_hBotImmunity			= AutoExecConfig_CreateConVar("jse_jb_immunity", 		"90",	 			"Bot immunity level", 																FCVAR_NONE												);
 	g_hDebug				= AutoExecConfig_CreateConVar("jse_jb_debug", 			"0", 				"Toggle debug mode", 																	FCVAR_DONTRECORD, 					true, 0.0, true, 1.0);
 	
-	g_hOutline	 			= AutoExecConfig_CreateConVar("jse_jb_outline", 		"1", 				"Toggle JumpBOT glow outline", 															FCVAR_NONE, 						true, 0.0, true, 1.0);
+	g_hOutline	 			= AutoExecConfig_CreateConVar("jse_jb_outline", 		"0", 				"Toggle JumpBOT glow outline", 															FCVAR_NONE, 						true, 0.0, true, 1.0);
 	g_hTrail 				= AutoExecConfig_CreateConVar("jse_jb_trail", 			"1", 				"Toggle JumpBOT path trail", 															FCVAR_NONE, 						true, 0.0, true, 1.0);
 	g_hTrailLife 			= AutoExecConfig_CreateConVar("jse_jb_trailtime", 		"5.0",				"Bot trail visible duration", 															FCVAR_NONE,							true, 0.0, true, 25.6);
 	g_hTrailColor	 		= AutoExecConfig_CreateConVar("jse_jb_trailcolor", 		"1E90FFFF",			"Bot travel path trail color (hex RGBA)", 												FCVAR_NONE												);
