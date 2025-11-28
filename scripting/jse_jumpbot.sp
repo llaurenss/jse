@@ -30,6 +30,7 @@
 #include <skeys>
 #include <jse_autosave>
 #include <octree>
+#include <jsn_timer>
 
 #pragma newdecls required
 
@@ -253,6 +254,7 @@ int g_iLastCallTime;
 bool g_bCoreAvailable;
 bool g_bShowKeysAvailable;
 bool g_bOctreeAvailable;
+bool g_bTimerAvailable;
 
 int g_iProjTrailColor[4];
 int g_iTrailColor[4];
@@ -266,6 +268,37 @@ float g_fSpeed[MAXPLAYERS + 1] = {1.0, ...};
 int g_iPerspective[MAXPLAYERS + 1] = {1, ...};
 
 Handle g_hSDKGetMaxClip1;
+
+bool SendTimerHudHint(int iClient, const char[] sMessage, any ...) {
+	if (!Client_IsValid(iClient) || !IsClientInGame(iClient)) {
+		return false;
+	}
+
+	char sBuffer[256];
+	VFormat(sBuffer, sizeof(sBuffer), sMessage, 3);
+
+	if (g_bTimerAvailable && JSN_SetHudOverride(iClient, sBuffer)) {
+		return true;
+	}
+
+	PrintHintText(iClient, sBuffer);
+	return false;
+}
+
+void ClearTimerHudHint(int iClient, const char[] sClearText = " ") {
+	if (!Client_IsValid(iClient) || !IsClientInGame(iClient)) {
+		return;
+	}
+
+	bool bHandled = false;
+	if (g_bTimerAvailable) {
+		bHandled = JSN_ClearHudOverride(iClient);
+	}
+
+	if (!bHandled) {
+		PrintHintText(iClient, sClearText);
+	}
+}
 
 GlobalForward g_hClientRestoreForward;
 
@@ -497,6 +530,8 @@ public void OnLibraryAdded(const char[] sName) {
 	} else if (StrEqual(sName, "octree")) {
 		g_bOctreeAvailable = true;
 		CreateSpatialIndex();
+	} else if (StrEqual(sName, "jsn_timer")) {
+		g_bTimerAvailable = true;
 	} else if (StrEqual(sName, "updater")) {
 		Updater_AddPlugin(UPDATE_URL);
 	} else if (StrEqual(sName, "socket.ext")) {
@@ -512,6 +547,8 @@ public void OnLibraryRemoved(const char[] sName) {
 	} else if (StrEqual(sName, "octree")) {
 		g_bOctreeAvailable = false;
 		g_iSpatialIdx = NULL_OCTREE;
+	} else if (StrEqual(sName, "jsn_timer")) {
+		g_bTimerAvailable = false;
 	}
 }
 
@@ -521,6 +558,7 @@ public void OnAllPluginsLoaded() {
 	g_bCoreAvailable = LibraryExists("jse_core");
 	g_bShowKeysAvailable = LibraryExists("jse_showkeys") || LibraryExists("skeys");
 	g_bOctreeAvailable = LibraryExists("octree");
+	g_bTimerAvailable = LibraryExists("jsn_timer");
 }
 
 public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int sErrMax) {
@@ -947,7 +985,7 @@ public void OnGameFrame() {
 			}
 
 			if (Client_IsValid(g_iClientOfInterest) && IsClientInGame(g_iClientOfInterest)) {
-				PrintHintText(g_iClientOfInterest, " ");
+				ClearTimerHudHint(g_iClientOfInterest, " ");
 				StopSound(g_iClientOfInterest, SNDCHAN_STATIC, "ui/hint.wav");
 				CreateTimer(0.1, Timer_CloseHintPanel, g_iClientOfInterest, TIMER_FLAG_NO_MAPCHANGE);
 				
@@ -1390,26 +1428,29 @@ public Action OnPlayerRunCmd(int iClient, int &iButtons, int &iImpulse, float fV
 				} else {
 					FormatEx(sRecordingType, sizeof(sRecordingType), "%T: %T", "Source", iClient, "Local", iClient);
 				}
-				
+
+				char sHudMsg[192];
 				if (g_iCallKeyMask) {
 					if (g_iClientInstruction & INST_PLAYALL) {
-						PrintHintText(iClient, "[%d/%d] %t %s/%s\n%s\n%t", g_hRecordings.Length-g_hPlaybackQueue.Length, g_hRecordings.Length, "Replaying", sTimePlay, sTimeTotal, sRecordingType, "Press Stop", g_sCallKeyLabel);
+						FormatEx(sHudMsg, sizeof(sHudMsg), "[%d/%d] %T %s/%s\n%s\n%T", g_hRecordings.Length-g_hPlaybackQueue.Length, g_hRecordings.Length, "Replaying", iClient, sTimePlay, sTimeTotal, sRecordingType, "Press Stop", iClient, g_sCallKeyLabel);
 					} else {
-						PrintHintText(iClient, "%t %s/%s\n%s\n%t", "Replaying", sTimePlay, sTimeTotal, sRecordingType, "Press Stop", g_sCallKeyLabel);
+						FormatEx(sHudMsg, sizeof(sHudMsg), "%T %s/%s\n%s\n%T", "Replaying", iClient, sTimePlay, sTimeTotal, sRecordingType, "Press Stop", iClient, g_sCallKeyLabel);
 					}
 				} else {
 					if (g_iClientInstruction & INST_PLAYALL) {
-						PrintHintText(iClient, "[%d/%d] %t %s/%s\n%s\n%t", g_hRecordings.Length-g_hPlaybackQueue.Length, g_hRecordings.Length, "Replaying", sTimePlay, sTimeTotal, sRecordingType, "Type Stop");
+						FormatEx(sHudMsg, sizeof(sHudMsg), "[%d/%d] %T %s/%s\n%s\n%T", g_hRecordings.Length-g_hPlaybackQueue.Length, g_hRecordings.Length, "Replaying", iClient, sTimePlay, sTimeTotal, sRecordingType, "Type Stop", iClient, g_sCallKeyLabel);
 					} else {
-						PrintHintText(iClient, "%t %s/%s\n%s", "Replaying", sTimePlay, sTimeTotal, sRecordingType);
+						FormatEx(sHudMsg, sizeof(sHudMsg), "%T %s/%s\n%s", "Replaying", iClient, sTimePlay, sTimeTotal, sRecordingType);
 					}
 				}
+
+				SendTimerHudHint(iClient, "%s", sHudMsg);
 				StopSound(iClient, SNDCHAN_STATIC, "ui/hint.wav");
 			}
 			
 			if (iButtons & g_iCallKeyMask && g_iRecBufferFrame >= 66) {
 				if (Client_IsValid(g_iClientOfInterest) && IsClientInGame(g_iClientOfInterest)) {
-					PrintHintText(g_iClientOfInterest, " ");
+					ClearTimerHudHint(g_iClientOfInterest, " ");
 					StopSound(g_iClientOfInterest, SNDCHAN_STATIC, "ui/hint.wav");
 					CreateTimer(0.1, Timer_CloseHintPanel, g_iClientOfInterest, TIMER_FLAG_NO_MAPCHANGE);
 					
@@ -3344,7 +3385,7 @@ public Action Timer_DoVoiceGo(Handle hTimer, any aData) {
 public Action Timer_CloseHintPanel(Handle hTimer, any aData) {
 	if (Client_IsValid(aData) && IsClientInGame(aData)) {
 		int iClient = aData;
-		PrintHintText(iClient, "");
+		ClearTimerHudHint(iClient, "");
 		StopSound(iClient, SNDCHAN_STATIC, "ui/hint.wav");
 	}
 	return Plugin_Continue;
@@ -3460,18 +3501,18 @@ public Action Hook_StartTouchInfo(int iEntity, int iOther) {
 		int iRecID = g_hRecordings.FindValue(iRecording);
 		if (g_iCallKeyMask) {
 			if (iRecording.Repo) {
-				PrintHintText(iOther, "%t (%s)%s\n%t: %s\n%t", "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Press Review", g_sCallKeyLabel);
+				SendTimerHudHint(iOther, "%t (%s)%s\n%t: %s\n%t", "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Press Review", g_sCallKeyLabel);
 			} else {
-				PrintHintText(iOther, "[%d] %t (%s)%s\n%t: %s\n%t", iRecID, "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Press Review", g_sCallKeyLabel);
+				SendTimerHudHint(iOther, "[%d] %t (%s)%s\n%t: %s\n%t", iRecID, "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Press Review", g_sCallKeyLabel);
 			}
 		} else {
 			char sCmd[32];
 			g_hBotCallSignShort.GetString(sCmd, sizeof(sCmd));
 			
 			if (iRecording.Repo) {
-				PrintHintText(iOther, "%t (%s)%s\n%t: %s\n%t", "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Type Review", sCmd);
+				SendTimerHudHint(iOther, "%t (%s)%s\n%t: %s\n%t", "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Type Review", sCmd);
 			} else {
-				PrintHintText(iOther, "[%d] %t (%s)%s\n%t: %s\n%t", iRecID, "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Type Review", sCmd);
+				SendTimerHudHint(iOther, "[%d] %t (%s)%s\n%t: %s\n%t", iRecID, "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Type Review", sCmd);
 			}
 		}
 		StopSound(iOther, SNDCHAN_STATIC, "ui/hint.wav");
@@ -3493,7 +3534,7 @@ public Action Hook_EndTouchInfo(int iEntity, int iOther) {
 	if (Client_IsValid(iOther) && !IsFakeClient(iOther) && g_bBubble[iOther]) {
 		int iTimeDiff = GetTime() - g_eLastBubbleTime[iOther].iTime;
 		if (EntIndexToEntRef(iEntity) == g_eLastBubbleTime[iOther].iEnt && iTimeDiff < 10) {
-			PrintHintText(iOther, " ");
+			ClearTimerHudHint(iOther, " ");
 			StopSound(iOther, SNDCHAN_STATIC, "ui/hint.wav");
 			CreateTimer(0.1, Timer_CloseHintPanel, iOther, TIMER_FLAG_NO_MAPCHANGE);
 		}
