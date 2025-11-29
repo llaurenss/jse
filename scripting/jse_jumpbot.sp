@@ -269,15 +269,15 @@ int g_iPerspective[MAXPLAYERS + 1] = {1, ...};
 
 Handle g_hSDKGetMaxClip1;
 
-bool SendTimerHudHint(int iClient, const char[] sMessage, any ...) {
+bool SendTimerHudHint(int iClient, float pauseTime = HUD_OVERRIDE_PAUSETIME_DISABLED, const char[] sMessage, any ...) {
 	if (!Client_IsValid(iClient) || !IsClientInGame(iClient)) {
 		return false;
 	}
 
 	char sBuffer[256];
-	VFormat(sBuffer, sizeof(sBuffer), sMessage, 3);
+	VFormat(sBuffer, sizeof(sBuffer), sMessage, 4);
 
-	if (g_bTimerAvailable && JSN_SetHudOverride(iClient, sBuffer)) {
+	if (g_bTimerAvailable && JSN_SetHudOverride(iClient, sBuffer, _, pauseTime)) {
 		return true;
 	}
 
@@ -1444,7 +1444,7 @@ public Action OnPlayerRunCmd(int iClient, int &iButtons, int &iImpulse, float fV
 					}
 				}
 
-				SendTimerHudHint(iClient, "%s", sHudMsg);
+				SendTimerHudHint(iClient, _, "%s", sHudMsg);
 				StopSound(iClient, SNDCHAN_STATIC, "ui/hint.wav");
 			}
 			
@@ -3501,18 +3501,18 @@ public Action Hook_StartTouchInfo(int iEntity, int iOther) {
 		int iRecID = g_hRecordings.FindValue(iRecording);
 		if (g_iCallKeyMask) {
 			if (iRecording.Repo) {
-				SendTimerHudHint(iOther, "%t (%s)%s\n%t: %s\n%t", "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Press Review", g_sCallKeyLabel);
+				SendTimerHudHint(iOther, HUD_OVERRIDE_PAUSETIME_DEFAULT, "%t (%s)%s\n%t: %s\n%t", "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Press Review", g_sCallKeyLabel);
 			} else {
-				SendTimerHudHint(iOther, "[%d] %t (%s)%s\n%t: %s\n%t", iRecID, "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Press Review", g_sCallKeyLabel);
+				SendTimerHudHint(iOther,HUD_OVERRIDE_PAUSETIME_DEFAULT, "[%d] %t (%s)%s\n%t: %s\n%t", iRecID, "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Press Review", g_sCallKeyLabel);
 			}
 		} else {
 			char sCmd[32];
 			g_hBotCallSignShort.GetString(sCmd, sizeof(sCmd));
 			
 			if (iRecording.Repo) {
-				SendTimerHudHint(iOther, "%t (%s)%s\n%t: %s\n%t", "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Type Review", sCmd);
+				SendTimerHudHint(iOther, HUD_OVERRIDE_PAUSETIME_DEFAULT, "%t (%s)%s\n%t: %s\n%t", "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Type Review", sCmd);
 			} else {
-				SendTimerHudHint(iOther, "[%d] %t (%s)%s\n%t: %s\n%t", iRecID, "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Type Review", sCmd);
+				SendTimerHudHint(iOther, HUD_OVERRIDE_PAUSETIME_DEFAULT, "[%d] %t (%s)%s\n%t: %s\n%t", iRecID, "Class Recording", sClass, sTimeTotal, sEquipName, "Author", sDisplay, "Type Review", sCmd);
 			}
 		}
 		StopSound(iOther, SNDCHAN_STATIC, "ui/hint.wav");
